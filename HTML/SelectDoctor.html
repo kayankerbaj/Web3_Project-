@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="/styles/SelectDoctor.css" />
+  </head>
+  <body>
+    <section class="filter-section">
+      <h2>Select Specialties</h2>
+      <form id="specialtyForm">
+        <label
+          ><input type="radio" name="specialty" value="Cardiology" />
+          Cardiology</label
+        >
+        <label
+          ><input type="radio" name="specialty" value="Dermatology" />
+          Dermatology</label
+        >
+        <label
+          ><input type="radio" name="specialty" value="Pediatrics" />
+          Pediatrics</label
+        >
+        <label
+          ><input type="radio" name="specialty" value="Neurology" />
+          Neurology</label
+        >
+        <label
+          ><input type="radio" name="specialty" value="Orthopedics" />
+          Orthopedics</label
+        >
+        <br /><br />
+        <button type="button" onclick="showSelected()">Show Selected</button>
+      </form>
+      <div id="result"></div>
+    </section>
+
+    <script>
+      function showSelected() {
+        const radio = document.querySelectorAll(
+          'input[name="specialty"]:checked'
+        );
+        const result = document.getElementById("result");
+        const selected = Array.from(radio).map((r) => r.value);
+        result.innerHTML = selected.length ? (
+          <p>
+            You selected: <strong>${selected}</strong>
+          </p>
+        ) : (
+          <p>No specialties selected.</p>
+        );
+      }
+    </script>
+  </body>
+</html>
