@@ -31,26 +31,9 @@
           Orthopedics</label
         >
         <br /><br />
-        <button type="button" onclick="showSelected()">Show Selected</button>
+        <button type="button" onclick="">Show Selected</button>
       </form>
       <div id="result"></div>
     </section>
-
-    <script>
-      function showSelected() {
-        const radio = document.querySelectorAll(
-          'input[name="specialty"]:checked'
-        );
-        const result = document.getElementById("result");
-        const selected = Array.from(radio).map((r) => r.value);
-        result.innerHTML = selected.length ? (
-          <p>
-            You selected: <strong>${selected}</strong>
-          </p>
-        ) : (
-          <p>No specialties selected.</p>
-        );
-      }
-    </script>
   </body>
 </html>
