@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DoctorSignUp</title>
+    <link rel="stylesheet" href="/styles/DoctorsignUp.css" />
+  </head>
+  <body>
+    <div class="containerSU">
+      <div class="info">
+        <h2>SignUp</h2>
+        <form action="" method="post">
+          <label for="username" class="label">Username</label>
+          <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            required
+            class="name"
+          />
+          <label for="Password" class="label">Password</label>
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+            class="password"
+          />
+          <label for="Email" class="label">Email</label>
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+            class="email"
+          />
+          <label for="speciality" class="label">Speciality</label>
+          <select name="speciality" id="speciality" class="speciality" required>
+            <option value="">Select Speciality</option>
+            <option value="cardiology">Cardiology</option>
+            <option value="dermatology">Dermatology</option>
+            <option value="neurology">Neurology</option>
+            <option value="orthopedics">Orthopedics</option>
+            <option value="pediatrics">Pediatrics</option>
+            <option value="psychiatry">Psychiatry</option>
+            <option value="radiology">Radiology</option>
+            <option value="general">General Medicine</option>
+          </select>
+          <label for="experience" class="label">Years of Experience</label>
+          <select name="experience" id="experience" class="experience" required>
+            <option value="">Select Years of Experience</option>
+            <option value="1">1 Year</option>
+            <option value="2">2 Years</option>
+            <option value="3">3 Years</option>
+            <option value="5">5 Years</option>
+            <option value="10">10 Years</option>
+            <option value="15">15 Years</option>
+            <option value="20">20+ Years</option>
+          </select>
+
+          <label for="Gender" class="label">Gender</label>
+          <br />
+          <label class="gender"
+            ><input type="radio" name="gender" value="female" required />
+            Female</label
+          >
+          <label class="gender"
+            ><input type="radio" name="gender" value="male" required />
+            Male</label
+          >
+
+          <input type="submit" value="SignUp" class="submit" />
+        </form>
+      </div>
+      <div class="info"><img src="/images/doctorSignupIMG.png" alt="" /></div>
+    </div>
+  </body>
+</html>

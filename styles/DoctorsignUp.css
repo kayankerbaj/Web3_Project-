@@ -1,0 +1,112 @@
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #7fb9f3;
+  font-family: Arial;
+}
+
+.containerSU {
+  margin: 20px;
+  background: #0097af;
+  display: flex;
+  gap: 70px;
+  padding: 20px;
+  border-style: solid;
+  border-radius: 20px;
+  border-color: rgb(4, 4, 138);
+}
+.info {
+  text-align: center;
+}
+
+.info img {
+  height: 550px;
+  border-radius: 20px;
+  width: 600px;
+  object-fit: contain;
+}
+
+.info h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+.label {
+  color: #333;
+}
+.gender {
+  color: #333;
+}
+.name {
+  width: 90%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.password {
+  width: 90%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.email {
+  width: 90%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.speciality {
+  width: 95%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  background-color: #f9f9f9;
+  color: #333;
+  cursor: pointer;
+}
+
+.speciality:focus {
+  border-color: #0077cc;
+  outline: none;
+  background-color: #eef6ff;
+}
+
+.submit {
+  width: 100%;
+  padding: 10px;
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.submit:hover {
+  background-color: #005fa3;
+}
+
+.experience {
+  width: 95%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  background-color: #f9f9f9;
+  color: #333;
+  cursor: pointer;
+}
+
+.experience:focus {
+  border-color: #0077cc;
+  outline: none;
+  background-color: #eef6ff;
+}
