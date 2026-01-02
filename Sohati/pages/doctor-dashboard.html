@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Dashboard - Sohati+</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <div class="layout-app">
+    <header class="header">
+      <div class="container header-inner">
+        <a href="index.html" class="brand">Sohati+</a>
+        <nav class="nav">
+          <span id="userName" style="color: var(--text-muted);"></span>
+          <a href="#" onclick="logout()" style="color: var(--danger);">Logout</a>
+        </nav>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <div class="sidebar-menu">
+        <a href="#" class="active" onclick="showPage('appointments')"> My Appointments</a>
+        <a href="#" onclick="showPage('messages')"> Messages</a>
+        <a href="#" onclick="showPage('profile')">⚙️ Profile</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div id="page-appointments" class="page">
+        <h1>My Appointments</h1>
+        <div id="appointmentsList" class="grid grid-2"></div>
+      </div>
+
+      <div id="page-messages" class="page" style="display: none;">
+        <h1>Messages</h1>
+        <div id="conversationsList" class="grid grid-2"></div>
+      </div>
+
+      <div id="page-profile" class="page" style="display: none;">
+        <h1>My Profile</h1>
+        <div class="card" style="max-width: 600px;">
+          <div id="profileInfo"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="chatModal" class="modal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2 style="margin: 0;" id="chatWith"></h2>
+        <button onclick="closeModal('chatModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+      </div>
+      
+      <div id="chatMessages" style="max-height: 400px; overflow-y: auto; margin-bottom: 16px; padding: 16px; background: var(--bg); border-radius: var(--radius);"></div>
+      
+      <form id="chatForm" style="display: flex; gap: 8px;">
+        <input type="text" id="chatInput" placeholder="Type a message..." required 
+               style="flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: var(--radius);">
+        <button type="submit" class="btn btn-primary">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="../assets/js/api.js"></script>
+  <script>
+    let currentUser = null;
+    let currentChatUserId = null;
+    let chatInterval = null;
+
+    window.addEventListener('load', async () => {
+      currentUser = await checkAuth();
+      if (currentUser) {
+        document.getElementById('userName').textContent = `Dr. ${currentUser.username}`;
+        loadAppointments();
+        loadConversations();
+        loadProfile();
+      }
+    });
+
+    async function loadAppointments() {
+      showLoading('appointmentsList');
+      
+      try {
+        const result = await API.get('appointments.php');
+        const list = document.getElementById('appointmentsList');
+        
+        if (result.data.length === 0) {
+          list.innerHTML = '<p class="empty-state"><div class="empty-state-icon"></div>No appointments yet</p>';
+          return;
+        }
+        
+        list.innerHTML = result.data.map(apt => `
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+              <div>
+                <h3 style="margin-bottom: 4px;">${apt.patient_name || 'Patient'}</h3>
+                <p style="color: var(--text-muted); font-size: 14px;">${apt.patient_email || ''}</p>
+              </div>
+              <span class="badge" style="background: ${apt.status_color}20; color: ${apt.status_color};">
+                ${apt.status_name}
+              </span>
+            </div>
+            <p style="margin-bottom: 8px;">
+              ${formatDate(apt.appointment_date)} at ${formatTime(apt.appointment_time)}
+            </p>
+            ${apt.notes ? `<p style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px;"><strong>Notes:</strong> ${apt.notes}</p>` : ''}
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <button onclick="startChatWithPatient(${apt.patient_user_id}, '${apt.patient_name}')" class="btn btn-secondary btn-small">
+                Message Patient
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        document.getElementById('appointmentsList').innerHTML = 
+          '<p class="empty-state">Failed to load appointments</p>';
+      }
+    }
+
+    async function loadConversations() {
+      showLoading('conversationsList');
+      
+      try {
+        const result = await API.get('conversations.php');
+        const list = document.getElementById('conversationsList');
+        
+        if (result.data.length === 0) {
+          list.innerHTML = '<p class="empty-state"><div class="empty-state-icon"></div>No conversations yet. Start by messaging a patient from your appointments!</p>';
+          return;
+        }
+        
+        list.innerHTML = result.data.map(conv => `
+          <div class="card" onclick="openChat(${conv.other_user_id}, '${conv.username}')" style="cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div>
+                <h3 style="margin-bottom: 4px;">${conv.username}</h3>
+                <p style="color: var(--text-muted); font-size: 13px; text-transform: capitalize;">${conv.role}</p>
+              </div>
+              ${conv.unread_count > 0 ? `
+                <span class="badge badge-primary">${conv.unread_count}</span>
+              ` : ''}
+            </div>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              ${conv.last_message || 'No messages yet'}
+            </p>
+          </div>
+        `).join('');
+      } catch (error) {
+        document.getElementById('conversationsList').innerHTML = 
+          '<p class="empty-state">Failed to load conversations</p>';
+      }
+    }
+
+    async function loadProfile() {
+      if (!currentUser) return;
+      
+      const info = document.getElementById('profileInfo');
+      info.innerHTML = `
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="font-size: 80px; margin-bottom: 16px;">⚕️</div>
+          <h2 style="margin-bottom: 8px;">Dr. ${currentUser.username}</h2>
+          <p style="color: var(--text-muted);">${currentUser.email}</p>
+        </div>
+        
+        <div style="padding: 16px; background: var(--bg); border-radius: var(--radius); margin-bottom: 16px;">
+          <p style="margin-bottom: 8px;"><strong>Role:</strong> Doctor</p>
+          <p style="margin-bottom: 8px;"><strong>Status:</strong> <span style="color: var(--secondary);">Active</span></p>
+          <p style="margin-bottom: 8px;"><strong>Gender:</strong> ${currentUser.gender || 'Not specified'}</p>
+          <p><strong>Phone:</strong> ${currentUser.phone || 'Not provided'}</p>
+        </div>
+      `;
+    }
+
+    function startChatWithPatient(userId, patientName) {
+      openChat(userId, patientName);
+    }
+
+    function openChat(userId, userName) {
+      currentChatUserId = userId;
+      document.getElementById('chatWith').textContent = userName;
+      openModal('chatModal');
+      loadMessages();
+      
+      if (chatInterval) clearInterval(chatInterval);
+      chatInterval = setInterval(loadMessages, 3000);
+    }
+
+    async function loadMessages() {
+      try {
+        const result = await API.get(`messages.php?user_id=${currentChatUserId}`);
+        const container = document.getElementById('chatMessages');
+        
+        if (result.data.length === 0) {
+          container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No messages yet. Start the conversation! ⚕️</p>';
+          return;
+        }
+        
+        container.innerHTML = result.data.map(msg => `
+          <div style="margin-bottom: 12px; text-align: ${msg.sender_id == currentChatUserId ? 'left' : 'right'};">
+            <div style="display: inline-block; max-width: 70%; padding: 8px 12px; border-radius: var(--radius); 
+                        background: ${msg.sender_id == currentChatUserId ? 'var(--bg)' : 'var(--primary)'}; 
+                        color: ${msg.sender_id == currentChatUserId ? 'var(--text)' : 'white'};">
+              ${msg.message_text}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+              ${new Date(msg.created_at).toLocaleTimeString()}
+            </div>
+          </div>
+        `).join('');
+        
+        container.scrollTop = container.scrollHeight;
+      } catch (error) {
+        console.error('Failed to load messages');
+      }
+    }
+
+    document.getElementById('chatForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      
+      if (!message) return;
+      
+      try {
+        await API.post('send-message.php', {
+          receiver_id: currentChatUserId,
+          message: message
+        });
+        
+        input.value = '';
+        loadMessages();
+        loadConversations();
+      } catch (error) {
+        // Error already shown
+      }
+    });
+
+    document.getElementById('chatModal').addEventListener('click', (e) => {
+      if (e.target.id === 'chatModal') {
+        if (chatInterval) {
+          clearInterval(chatInterval);
+          chatInterval = null;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

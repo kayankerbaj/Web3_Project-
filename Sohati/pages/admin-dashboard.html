@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Sohati+</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+    
+    .header {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .brand {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2563eb;
+    }
+    
+    .logout-btn {
+      background: #ef4444;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 60px;
+      width: 250px;
+      height: calc(100vh - 60px);
+      background: white;
+      border-right: 1px solid #e2e8f0;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    .sidebar-menu a {
+      display: block;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #1e293b;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    .sidebar-menu a:hover,
+    .sidebar-menu a.active {
+      background: #2563eb;
+      color: white;
+    }
+    
+    .main-content {
+      margin-left: 250px;
+      margin-top: 60px;
+      padding: 24px;
+      min-height: calc(100vh - 60px);
+    }
+    
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+    
+    .btn-secondary {
+      background: #10b981;
+      color: white;
+    }
+    
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .page {
+      display: none;
+    }
+    
+    .page.active {
+      display: block;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #64748b;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+    }
+    
+    .spinner {
+      border: 3px solid #e2e8f0;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border-left: 4px solid #10b981;
+      z-index: 2000;
+      display: none;
+    }
+    
+    .toast.error {
+      border-left-color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="brand"> Sohati+ Admin</div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </header>
+
+  <aside class="sidebar">
+    <div class="sidebar-menu">
+      <a href="#" class="active" onclick="showPage('stats'); return false;"> Dashboard</a>
+      <a href="#" onclick="showPage('pending'); return false;"> Pending Doctors</a>
+      <a href="#" onclick="showPage('appointments'); return false;"> All Appointments</a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div id="page-stats" class="page active">
+      <h1>Platform Statistics</h1>
+      <div id="statsCards" class="grid-4" style="margin-top: 24px;"></div>
+    </div>
+
+    <div id="page-pending" class="page">
+      <h1>Approve Doctors</h1>
+      <div id="pendingDoctors" class="grid-2" style="margin-top: 24px;"></div>
+    </div>
+
+    <div id="page-appointments" class="page">
+      <h1>All Appointments</h1>
+      <div id="allAppointments" class="grid-2" style="margin-top: 24px;"></div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const API = {
+      baseURL: '../api/',
+      async request(endpoint, method = 'GET', body = null) {
+        const url = this.baseURL + endpoint;
+        const options = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) options.body = JSON.stringify(body);
+        
+        try {
+          const response = await fetch(url, options);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Request failed');
+          return data;
+        } catch (error) {
+          showToast(error.message, 'error');
+          throw error;
+        }
+      },
+      get(endpoint) { return this.request(endpoint, 'GET'); },
+      post(endpoint, body) { return this.request(endpoint, 'POST', body); }
+    };
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast ' + type;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    function showPage(pageName) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + pageName).classList.add('active');
+      
+      document.querySelectorAll('.sidebar-menu a').forEach(link => link.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      if (pageName === 'pending') loadPending();
+      else if (pageName === 'appointments') loadAllAppointments();
+    }
+
+    function logout() {
+      fetch('../api/logout.php', { method: 'POST' })
+        .then(() => window.location.href = './login.html');
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function formatTime(timeStr) {
+      const [hours, minutes] = timeStr.split(':');
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour % 12 || 12;
+      return `${displayHour}:${minutes} ${ampm}`;
+    }
+
+    function showLoading(elementId) {
+      document.getElementById(elementId).innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    }
+
+    async function loadStats() {
+      showLoading('statsCards');
+      
+      try {
+        const result = await API.get('admin-stats.php');
+        const stats = result.data;
+        
+        document.getElementById('statsCards').innerHTML = `
+          <div class="card" style="text-align: center;">
+            <div style="font-size: 48px; color: #2563eb; margin-bottom: 8px;">${stats.patients}</div>
+            <p style="font-weight: 600;">Total Patients</p>
+          </div>
+          <div class="card" style="text-align: center;">
+            <div style="font-size: 48px; color: #10b981; margin-bottom: 8px;">${stats.doctors}</div>
+            <p style="font-weight: 600;">Approved Doctors</p>
+          </div>
+          <div class="card" style="text-align: center;">
+            <div style="font-size: 48px; color: #f59e0b; margin-bottom: 8px;">${stats.pending_doctors}</div>
+            <p style="font-weight: 600;">Pending Approvals</p>
+          </div>
+          <div class="card" style="text-align: center;">
+            <div style="font-size: 48px; color: #2563eb; margin-bottom: 8px;">${stats.upcoming_appointments}</div>
+            <p style="font-weight: 600;">Upcoming Appointments</p>
+          </div>
+        `;
+      } catch (error) {
+        document.getElementById('statsCards').innerHTML = '<p class="empty-state">Failed to load statistics</p>';
+      }
+    }
+
+    async function loadPending() {
+      showLoading('pendingDoctors');
+      
+      try {
+        const result = await API.get('admin-pending-doctors.php');
+        const list = document.getElementById('pendingDoctors');
+        
+        if (result.data.length === 0) {
+          list.innerHTML = '<p class="empty-state">✅ No pending approvals</p>';
+          return;
+        }
+        
+        list.innerHTML = result.data.map(doc => `
+          <div class="card">
+            <h3 style="margin-bottom: 8px;">Dr. ${doc.username}</h3>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 4px;">
+              ${doc.specialty_name || 'General Practice'}
+            </p>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 4px;">
+              ${doc.email}
+            </p>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 12px;">
+              ${doc.years_of_experience} years experience
+            </p>
+            <p style="font-weight: 600; color: #2563eb; margin-bottom: 16px;">
+              $${doc.consultation_fee}/session
+            </p>
+            <div style="display: flex; gap: 8px;">
+              <button onclick="approveDoctor(${doc.id})" class="btn btn-secondary" style="flex: 1;">
+                ✓ Approve
+              </button>
+              <button onclick="rejectDoctor(${doc.id})" class="btn btn-danger" style="flex: 1;">
+                ✗ Reject
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        document.getElementById('pendingDoctors').innerHTML = '<p class="empty-state">Failed to load</p>';
+      }
+    }
+
+    async function loadAllAppointments() {
+      showLoading('allAppointments');
+      
+      try {
+        const result = await API.get('admin-all-appointments.php');
+        const list = document.getElementById('allAppointments');
+        
+        if (result.data.length === 0) {
+          list.innerHTML = '<p class="empty-state">No appointments yet</p>';
+          return;
+        }
+        
+        list.innerHTML = result.data.map(apt => `
+          <div class="card">
+            <h4>${apt.patient_name} → Dr. ${apt.doctor_name}</h4>
+            <p style="color: #64748b; font-size: 13px;">${apt.specialty_name || 'General'}</p>
+            <p style="font-size: 14px; margin-top: 8px;">
+               ${formatDate(apt.appointment_date)} at ${formatTime(apt.appointment_time)}
+            </p>
+            <p style="font-size: 14px; color: #2563eb; font-weight: 600; margin-top: 8px;">
+              Commission: $${apt.commission}
+            </p>
+          </div>
+        `).join('');
+      } catch (error) {
+        document.getElementById('allAppointments').innerHTML = '<p class="empty-state">Failed to load</p>';
+      }
+    }
+
+    async function approveDoctor(id) {
+      try {
+        await API.post('admin-approve-doctor.php', { doctor_id: id, action: 'approved' });
+        showToast('Doctor approved successfully!', 'success');
+        loadPending();
+        loadStats();
+      } catch (error) {}
+    }
+
+    async function rejectDoctor(id) {
+      if (!confirm('Are you sure you want to reject this doctor?')) return;
+      try {
+        await API.post('admin-approve-doctor.php', { doctor_id: id, action: 'rejected' });
+        showToast('Doctor rejected', 'success');
+        loadPending();
+        loadStats();
+      } catch (error) {}
+    }
+
+    window.addEventListener('load', async () => {
+      try {
+        const result = await API.get('me.php');
+        if (result.data.role !== 'admin') {
+          window.location.href = 'index.html';
+          return;
+        }
+        loadStats();
+      } catch (error) {
+        window.location.href = './login.html';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sohati+ - Medical Appointment Platform</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand"> Sohati+</a>
+      <nav class="nav">
+        <a href="#features">Features</a>
+        <a href="#doctors">Doctors</a>
+        <a href="login.html" class="btn btn-primary btn-small">Sign In</a>
+        <a href="register.html" class="btn btn-outline btn-small">Sign Up</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Your Health, Our Priority</h1>
+      <p>Book appointments with top doctors, chat securely, and manage your health journey</p>
+      <div class="hero-buttons">
+        <a href="register.html?role=patient" class="btn btn-primary" style="background: white; color: #2563eb;">
+          Get Started as Patient
+        </a>
+        <a href="register.html?role=doctor" class="btn btn-outline" style="border-color: white; color: white;">
+          Join as Doctor
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="features">
+    <div class="container">
+      <h2 style="text-align: center; margin-bottom: 40px; font-size: 36px;">Why Choose Sohati+?</h2>
+      <div class="grid grid-3">
+        <div class="card feature-card">
+          <div class="feature-icon">⏰</div>
+          <h3>Easy Booking</h3>
+          <p>Schedule appointments in seconds with real-time availability</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon"></div>
+          <h3>Secure Messaging</h3>
+          <p>Chat directly with doctors before and after appointments</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon"></div>
+          <h3>Privacy First</h3>
+          <p>Your health data is encrypted and fully secure</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon">‍⚕️</div>
+          <h3>Expert Doctors</h3>
+          <p>Connect with qualified healthcare professionals</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon"></div>
+          <h3>Mobile Friendly</h3>
+          <p>Access from anywhere on any device</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon"></div>
+          <h3>Smart Matching</h3>
+          <p>Find the right doctor for your needs</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="doctors" style="padding: 60px 0; background: white;">
+    <div class="container">
+      <h2 style="text-align: center; margin-bottom: 40px; font-size: 36px;">Featured Doctors</h2>
+      <div id="doctorsList" class="grid grid-3"></div>
+      <div style="text-align: center; margin-top: 40px;">
+        <a href="register.html" class="btn btn-primary">Join Sohati+ Today</a>
+      </div>
+    </div>
+  </section>
+
+  <footer style="background: #1e293b; color: white; padding: 40px 20px; text-align: center;">
+    <div class="container">
+      <h3 style="color: white; margin-bottom: 16px;"> Sohati+</h3>
+      <p style="color: #94a3b8; margin-bottom: 24px;">Your trusted healthcare platform</p>
+      <p style="color: #64748b;">© 2024 Sohati+. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <div id="toast"></div>
+
+  <script src="../assets/js/api.js"></script>
+  <script>
+    window.addEventListener('load', async () => {
+      const list = document.getElementById('doctorsList');
+      
+      try {
+        const result = await API.get('doctors.php');
+        const doctors = result.data.slice(0, 6);
+        
+        if (doctors.length === 0) {
+          list.innerHTML = '<p class="empty-state">No doctors available yet</p>';
+          return;
+        }
+        
+        list.innerHTML = doctors.map(doc => `
+          <div class="card">
+            <div style="font-size: 64px; text-align: center; margin-bottom: 16px;">‍⚕️</div>
+            <h3 style="text-align: center; margin-bottom: 8px;">Dr. ${doc.username}</h3>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 8px;">
+              ${doc.specialty_name || 'General Practice'}
+            </p>
+            <p style="text-align: center; font-weight: 600; color: var(--primary); margin-bottom: 16px;">
+              $${doc.consultation_fee}/session
+            </p>
+            <a href="register.html" class="btn btn-primary btn-block btn-small">Book Appointment</a>
+          </div>
+        `).join('');
+      } catch (error) {
+        list.innerHTML = '<p class="empty-state">Unable to load doctors</p>';
+      }
+    });
+  </script>
+</body>
+</html>

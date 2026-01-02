@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - Sohati+</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    .auth-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .auth-card {
+      max-width: 450px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="card auth-card">
+      <h1 style="text-align: center; color: var(--primary); margin-bottom: 8px;">Welcome Back</h1>
+      <p style="text-align: center; color: var(--text-muted); margin-bottom: 32px;">
+        Sign in to your Sohati+ account
+      </p>
+      
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="email" placeholder="your@email.com" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="Enter your password" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+      </form>
+      
+      <p style="text-align: center; margin-top: 24px; color: var(--text-muted);">
+        Don't have an account? 
+        <a href="register.html" style="color: var(--primary); font-weight: 600;">Create one</a>
+      </p>
+      
+      <div id="errorMsg" style="color: var(--danger); text-align: center; margin-top: 16px; min-height: 20px;"></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="../assets/js/api.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const errorMsg = document.getElementById('errorMsg');
+      
+      errorMsg.textContent = '';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Signing in...';
+      
+      try {
+        const result = await API.post('login.php', { email, password });
+        
+        showToast('Login successful!', 'success');
+        
+        setTimeout(() => {
+          const redirects = {
+            'patient': 'patient-dashboard.html',
+            'doctor': 'doctor-dashboard.html',
+            'admin': 'admin-dashboard.html'
+          };
+          window.location.href = redirects[result.role] || 'patient-dashboard.html';
+        }, 500);
+        
+      } catch (error) {
+        errorMsg.textContent = error.message || 'Login failed';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
+      }
+    });
+  </script>
+</body>
+</html>
